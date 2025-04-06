@@ -4,21 +4,10 @@ from enum import StrEnum
 
 base = declarative_base()
 
-class FoodDatatype(StrEnum):
-    Legacy = 'sr_legacy_food'
-    Sample = 'sample_food'
-    MarketAcq = 'market_acquisition'
-    SampleSub = 'sub_sample_food'
-    Foundation = 'foundation_food'
-    AgriculturalAcq = 'agricultural_acquisition'
-    Branded = 'branded_food'
-    SurveyFndds = 'survey_fndds_food'
-
-
 class Food(base):
     __tablename__ = 'food'
     fdc_id = Column(Integer, primary_key=True)
-    data_type = Column(StrEnum(FoodDatatype), nullable=False)
+    data_type = Column(String, nullable=False)
     description = Column(String, nullable=False)
     food_category_id = Column(String, ForeignKey('food_category.id'), nullable=False)
 

@@ -63,19 +63,6 @@ def get_by_food_category(category_id: int, search_term: str):
     )
 
 # Wyszukiwania na podstawie typów żywności (branded, legacy..):
-
-# def get_foods_by_type(session: Session, data_type: FoodDatatype, search_term: str): # -> Tuple[]:
-#     return (base_query(session)
-#         .join(Food.branded_food)
-#         .filter(
-#             Food.data_type == data_type,
-#             Food.description.ilike(f"%{search_term}%",
-#             Nutrient.id.in_(COMMON_NUTRIENT_IDS))
-#         )
-#         .order_by(Food.description, NUTRIENT_ORDER)
-#         .all()
-#     )
-
 def get_branded_foods(session: Session, search_term: str) -> Row[Food, Nutrient] | None:
     search_any = f"%{search_term}%"
     return (base_query(session)

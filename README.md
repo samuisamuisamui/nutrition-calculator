@@ -12,6 +12,10 @@ Projekt będzie oparty na wykorzystaniu podstawowego terminala (bez GUI).
 
 Wykorzystanie SQLite - prostota projektu oraz wykorzystanie lokalnej bazy danych.
 
+Link do przykładowej bazy danych:
+
+https://github.com/MenuLogistics/USDASQLite
+
 ### Propozycje zmian/rozszerzenia projektu:
 
 - wprowadzenie GUI

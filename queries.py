@@ -33,21 +33,22 @@ def get_available_categories(session: Session):
 
 def get_available_food_types():
     return [
-        ('branded_food', 'Produkty markowe'),
-        ('sr_legacy_food', 'Podstawowe produkty'),
-        ('sample_food', 'Próbki żywności')
+        ('branded_food', 'Branded Food (Produkty Markowe)'),
+        ('sr_legacy_food', 'Legacy Food (Podstawowe produkty)')
     ]
 
 # Przeszukanie całej bazy:
 
-def get_all(search_term: str):
-    return (base_query()
-            .join(Food)
-            .filter(Food.description.ilike(f"%{search_term}%"),
-                    Nutrient.id.in_(COMMON_NUTRIENT_IDS))
-            .order_by(Food.description, NUTRIENT_ORDER)
-            .all()
+def get_whole_database(session: Session, search_term: str):
+    return (base_query(session)
+        .filter(
+            Food.description.ilike(f"%{search_term}%"),
+            Nutrient.id.in_(COMMON_NUTRIENT_IDS)
+        )
+        .order_by(Food.description, NUTRIENT_ORDER)
+        .all()
     )
+
 # Przeszukanie wybranej kategorii jedzenia 
 
 def get_food_category(category_id: int):
@@ -86,27 +87,16 @@ def get_branded_foods(session: Session, search_term: str) -> Row[Food, Nutrient]
         .all()
     )
 
-def get_legacy_foods(search_term: str):
-    return (base_query()
-        .join(Food.sr_legacy_foods)
+def get_legacy_foods(session: Session, search_term: str):
+    return (base_query(session)
+        .join(Food.sr_legacy_foods)  
         .filter(
             Food.data_type == 'sr_legacy_food',
-            Food.description.ilike(f"%{search_term}%",
-            Nutrient.id.in_(COMMON_NUTRIENT_IDS))
+            Food.description.ilike(f"%{search_term}%"),
+            Nutrient.id.in_(COMMON_NUTRIENT_IDS)
         )
         .order_by(Food.description, NUTRIENT_ORDER)
         .all()
     )
 
-def get_sample_foods(search_term: str):
-    return (base_query()
-        .join(Food.sr_legacy_foods)
-        .filter(
-            Food.data_type == 'sr_legacy_food',
-            Food.description.ilike(f"%{search_term}%",
-            Nutrient.id.in_(COMMON_NUTRIENT_IDS))
-        )
-        .order_by(Food.description, NUTRIENT_ORDER)
-        .all()
-    )
 

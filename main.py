@@ -5,9 +5,9 @@ from queries import NutritionRepository
 
 def show_welcome():
     print("""
-    ################################
-    #  WELCOME TO NUTRITION CALCULATOR  #
-    ################################
+    ###################################
+    # WELCOME TO NUTRITION CALCULATOR #
+    ###################################
     """)
 
 def get_user_portion() -> float:
@@ -19,6 +19,90 @@ def get_user_portion() -> float:
             return portion
         except ValueError:
             print("Invalid input. Please enter a positive number.")
+
+def truncate_name(name, max_length=45):
+    """Skraca nazwę produktu dodając '...' jeśli jest za długa"""
+    if len(name) > max_length:
+        return name[:max_length-3] + "..."
+    return name
+
+def print_results(results, portion):
+    if not results:
+        print("\nNo results found.")
+        return
+
+    # Formatowanie nagłówków
+    print("\n{:<45} | {:<30} | {:>10} | {:<10}".format(
+        "Food Name", "Nutrient", "Amount", "Unit"
+    ))
+    print("-" * 105)
+    
+    # Grupujemy wyniki po nazwie produktu
+    grouped_results = {}
+    for row in results:
+        # Używamy skróconej nazwy dla grupowania
+        short_name = truncate_name(row.food_name)
+        
+        if short_name not in grouped_results:
+            grouped_results[short_name] = {}
+        
+        # Grupujemy składniki odżywcze
+        if row.nutrient_name not in grouped_results[short_name]:
+            grouped_results[short_name][row.nutrient_name] = {
+                'values': [],
+                'unit': row.unit_name
+            }
+        
+        # Dodajemy wartość po przeliczeniu na porcję
+        adjusted_amount = row.amount * (portion / 100)
+        grouped_results[short_name][row.nutrient_name]['values'].append(adjusted_amount)
+    
+    # Iterujemy po grupach produktów
+    for food_name, nutrients in grouped_results.items():
+        first_row = True
+        
+        # Iterujemy po składnikach odżywczych w ustalonej kolejności
+        nutrient_order = [
+            "Energy",
+            "Carbohydrate, by difference",
+            "Protein",
+            "Total lipid (fat)"
+        ]
+        
+        for nutrient_name in nutrient_order:
+            if nutrient_name in nutrients:
+                nutrient_data = nutrients[nutrient_name]
+                values = nutrient_data['values']
+                unit = nutrient_data['unit']
+                
+                # Obliczamy średnią jeśli jest wiele wartości
+                if len(values) > 1:
+                    avg_amount = sum(values) / len(values)
+                    display_amount = round(avg_amount, 2)
+                    amount_info = f"{display_amount:.2f} (avg)"
+                else:
+                    display_amount = round(values[0], 2)
+                    amount_info = f"{display_amount:.2f}"
+                
+                # Wyświetlamy wiersz
+                if first_row:
+                    print("{:<45} | {:<30} | {:>10} | {:<10}".format(
+                        food_name,
+                        nutrient_name,
+                        amount_info,
+                        unit
+                    ))
+                    first_row = False
+                else:
+                    print("{:<45} | {:<30} | {:>10} | {:<10}".format(
+                        "",
+                        nutrient_name,
+                        amount_info,
+                        unit
+                    ))
+        
+        # Dodajemy linię separatora po wszystkich składnikach produktu
+        print("-" * 105)
 
 def main_menu(repo): 
     while True:
@@ -61,19 +145,7 @@ def handle_category_search(repo):
             return
             
         print(f"\nSearch Results (per {portion}g):")
-        print("{:<50} | {:<20} | {:<10} | {}".format(
-            "Food Name", "Nutrient", "Amount", "Unit"
-        ))
-        print("-"*100)
-        
-        for row in results:
-            adjusted_amount = row.amount * (portion / 100)
-            print("{:<50} | {:<20} | {:<10} | {}".format(
-                row.food_name,
-                row.nutrient_name,
-                round(adjusted_amount, 2),
-                row.unit_name
-            ))
+        print_results(results, portion)
             
     except ValueError:
         print("\nInvalid category ID. Please enter a numeric value.")
@@ -115,19 +187,7 @@ def handle_food_type_search(repo):
             return
             
         print(f"\nSearch Results (per {portion}g):")
-        print("{:<50} | {:<20} | {:<10} | {}".format(
-            "Food Name", "Nutrient", "Amount", "Unit"
-        ))
-        print("-" * 100)
-        
-        for row in results:
-            adjusted_amount = row.amount * (portion / 100)
-            print("{:<50} | {:<20} | {:<10} | {}".format(
-                row.food_name,
-                row.nutrient_name,
-                round(adjusted_amount, 2), 
-                row.unit_name
-            ))
+        print_results(results, portion)
             
     except ValueError:
         print("\nInvalid input. Please enter a number between 1-2.")
@@ -144,19 +204,7 @@ def handle_whole_database_search(repo):
         return
     
     print(f"\nSearch Results (per {portion}g):")
-    print("{:<50} | {:<20} | {:<10} | {}".format(
-        "Food Name", "Nutrient", "Amount", "Unit"
-    ))
-    print("-"*100)
-    
-    for row in results:
-        adjusted_amount = row.amount * (portion / 100)
-        print("{:<50} | {:<20} | {:<10} | {}".format(
-            row.food_name,
-            row.nutrient_name,
-            round(adjusted_amount, 2),
-            row.unit_name
-        ))
+    print_results(results, portion)
 
 def main():
     engine = create_engine("sqlite:///USDA-SQLite.sqlite")

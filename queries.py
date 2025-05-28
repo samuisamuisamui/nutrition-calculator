@@ -6,14 +6,12 @@ class NutritionRepository:
     def __init__(self, session: Session):
         self.session = session
 
-        self.COMMON_NUTRIENT_IDS = [1008, 1003, 1004, 1005, 1051, 1162]
+        self.COMMON_NUTRIENT_IDS = [1008, 1003, 1004, 1005]
         self.NUTRIENT_ORDER = case(
             (Nutrient.id == 1008, 1),  # Energia
             (Nutrient.id == 1005, 2),  # Węglowodany
             (Nutrient.id == 1003, 3),  # Białko
             (Nutrient.id == 1004, 4),  # Tłuszcz
-            (Nutrient.id == 1051, 5),  # Wapń
-            (Nutrient.id == 1162, 6),  # Sód
             else_=None
         )
 

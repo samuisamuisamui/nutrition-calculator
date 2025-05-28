@@ -20,8 +20,7 @@ def base_query(session: Session):
         Food.description.label("food_name"),
         Nutrient.name.label("nutrient_name"),
         FoodNutrient.amount,
-        Nutrient.unit_name,
-        literal_column("'per 100g'").label("portion_size")
+        Nutrient.unit_name
     ).join(FoodNutrient, Food.fdc_id == FoodNutrient.fdc_id
     ).join(Nutrient, FoodNutrient.nutrient_id == Nutrient.id)
     return q

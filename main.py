@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from queries import get_available_categories, get_by_food_category, get_available_food_types, get_branded_foods, get_legacy_foods, get_whole_database
+from queries import NutritionRepository
 
 
 def show_welcome():
@@ -20,7 +20,7 @@ def get_user_portion() -> float:
         except ValueError:
             print("Invalid input. Please enter a positive number.")
 
-def main_menu(session):
+def main_menu(repo): 
     while True:
         print("\nMain Menu:")
         print("1. Search by Category")
@@ -31,30 +31,30 @@ def main_menu(session):
         choice = input("\nEnter your choice (1-4): ").strip()
         
         if choice == '1':
-            handle_category_search(session)
+            handle_category_search(repo) 
         elif choice == '2':
-            handle_food_type_search(session)
+            handle_food_type_search(repo)  
         elif choice == '3':
-            handle_whole_database_search(session)
+            handle_whole_database_search(repo)
         elif choice == '4':
             print("\nThank you for using Nutrition Calculator!")
             break
         else:
             print("\nInvalid choice. Please enter a number between 1-4.")
 
-def handle_category_search(session):
+def handle_category_search(repo):  
     print("\n=== Category Search ===")
     portion = get_user_portion()
-    categories = get_available_categories(session)
     
-    # Pokazujemy najpierw dostępne kategorie
-    show_all_categories(session)
+    # Pokazujemy dostępne kategorie
+    show_all_categories(repo)
     
     try:
         category_id = int(input("\nEnter category ID: "))
         search_term = input("Enter search term: ").strip()
         
-        results = get_by_food_category(session, category_id, search_term)
+        # Używamy metody repozytorium
+        results = repo.get_by_food_category(category_id, search_term)
         
         if not results:
             print("\nNo results found for your search criteria.")
@@ -78,19 +78,19 @@ def handle_category_search(session):
     except ValueError:
         print("\nInvalid category ID. Please enter a numeric value.")
 
-def show_all_categories(session):
-    categories = get_available_categories(session)
+def show_all_categories(repo):
+    categories = repo.get_available_categories()
     print("\nAvailable Food Categories:")
     print("{:<6} | {}".format("ID", "Category Name"))
     print("-"*6 + "|" + "-"*30)
     for cat in categories:
         print("{:<6} | {}".format(cat.id, cat.description))
 
-def handle_food_type_search(session):
+def handle_food_type_search(repo):
     print("\n=== Food Type Search ===")
     portion = get_user_portion()
     
-    food_types = get_available_food_types()
+    food_types = repo.get_available_food_types()
     
     print("\nAvailable Food Types:")
     for idx, (_, type_name) in enumerate(food_types, 1):
@@ -104,10 +104,11 @@ def handle_food_type_search(session):
         search_term = input("Enter search term: ").strip()
         food_type = food_types[type_choice-1][0]
         
+        # Używamy metod repozytorium
         if food_type == 'branded_food':
-            results = get_branded_foods(session, search_term)
+            results = repo.get_branded_foods(search_term)
         elif food_type == 'sr_legacy_food':
-            results = get_legacy_foods(session, search_term)
+            results = repo.get_legacy_foods(search_term)
         
         if not results:
             print("\nNo results found for your search criteria.")
@@ -131,12 +132,12 @@ def handle_food_type_search(session):
     except ValueError:
         print("\nInvalid input. Please enter a number between 1-2.")
 
-def handle_whole_database_search(session):
+def handle_whole_database_search(repo):
     print("\n=== Whole Database Search ===")
     portion = get_user_portion()
     search_term = input("Enter search term: ").strip()
 
-    results = get_whole_database(session, search_term)
+    results = repo.get_whole_database(search_term)
 
     if not results:
         print("\nNo results found for your search criteria.")
@@ -163,8 +164,10 @@ def main():
     
     with Session() as session:
         try:
+            repo = NutritionRepository(session)
+            
             show_welcome()
-            main_menu(session)
+            main_menu(repo)  
         finally:
             session.close()
 

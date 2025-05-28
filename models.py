@@ -14,7 +14,6 @@ class Food(base):
     attributes = relationship("FoodAttribute", back_populates="food")
     portions = relationship("FoodPortion", back_populates="food")
     branded_food = relationship("BrandedFood", back_populates="food", uselist=False)
-    sample_food = relationship("SampleFood", back_populates="food", uselist=False)
     sr_legacy_foods = relationship("Sr_legacy_food", back_populates="food")
     nutrients = relationship("FoodNutrient", back_populates="food")
 
@@ -48,11 +47,6 @@ class FoodCategory(base):
     description = Column(String)
 
     foods = relationship("Food", back_populates="category")
-
-class WWEIAFoodCategory(base):
-    __tablename__ = 'wweia_food_category'
-    wweia_food_category_code = Column(Integer, primary_key=True)
-    wweia_food_category_description = Column(String)
     
 class BrandedFood(base):
     __tablename__ = 'branded_food'
@@ -71,13 +65,6 @@ class BrandedFood(base):
     discontinued_date = Column(String)
 
     food = relationship("Food", back_populates="branded_food")
-
-
-class SampleFood(base):
-    __tablename__ = 'sample_food'
-    fdc_id = Column(Integer, ForeignKey('food.fdc_id'), primary_key=True)
-
-    food = relationship("Food", back_populates="sample_food")
 
 class Sr_legacy_food(base):
     __tablename__ = 'sr_legacy_food'

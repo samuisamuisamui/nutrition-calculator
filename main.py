@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from queries import NutritionRepository
+import textwrap
 
 
 def show_welcome():
@@ -20,55 +21,69 @@ def get_user_portion() -> float:
         except ValueError:
             print("Invalid input. Please enter a positive number.")
 
-def truncate_name(name, max_length=45):
-    """Skraca nazwę produktu dodając '...' jeśli jest za długa"""
-    if len(name) > max_length:
-        return name[:max_length-3] + "..."
-    return name
-
 def print_results(results, portion):
     if not results:
         print("\nNo results found.")
         return
-
+    
+    print(f"\nSearch Results (per {portion}g):")
+    
     # Formatowanie nagłówków
-    print("\n{:<45} | {:<30} | {:>10} | {:<10}".format(
+    print("{:<60} | {:<30} | {:>10} | {:<10}".format(
         "Food Name", "Nutrient", "Amount", "Unit"
     ))
-    print("-" * 105)
+    separator = "-" * 120
+    print(separator)
     
     # Grupujemy wyniki po nazwie produktu
     grouped_results = {}
     for row in results:
-        # Używamy skróconej nazwy dla grupowania
-        short_name = truncate_name(row.food_name)
-        
-        if short_name not in grouped_results:
-            grouped_results[short_name] = {}
+        if row.food_name not in grouped_results:
+            grouped_results[row.food_name] = {}
         
         # Grupujemy składniki odżywcze
-        if row.nutrient_name not in grouped_results[short_name]:
-            grouped_results[short_name][row.nutrient_name] = {
+        if row.nutrient_name not in grouped_results[row.food_name]:
+            grouped_results[row.food_name][row.nutrient_name] = {
                 'values': [],
                 'unit': row.unit_name
             }
         
         # Dodajemy wartość po przeliczeniu na porcję
         adjusted_amount = row.amount * (portion / 100)
-        grouped_results[short_name][row.nutrient_name]['values'].append(adjusted_amount)
+        grouped_results[row.food_name][row.nutrient_name]['values'].append(adjusted_amount)
+    
+    # Ustalamy kolejność składników
+    nutrient_order = [
+        "Energy",
+        "Carbohydrate, by difference",
+        "Protein",
+        "Total lipid (fat)"
+    ]
     
     # Iterujemy po grupach produktów
     for food_name, nutrients in grouped_results.items():
-        first_row = True
+        # Dzielimy długą nazwę produktu na wielolinijkowy blok
+        name_lines = textwrap.wrap(food_name, width=60)
+        
+        # Wyświetlamy pierwszą część nazwy produktu w pierwszym wierszu
+        print("{:<60} | {:<30} | {:>10} | {:<10}".format(
+            name_lines[0] if name_lines else "",
+            "",
+            "",
+            ""
+        ))
+        
+        # Wyświetlamy pozostałe części nazwy (jeśli istnieją)
+        for line in name_lines[1:]:            print("{:<60} | {:<30} | {:>10} | {:<10}".format(
+                line,
+                "",
+                "",
+                ""
+            ))
+        
+        print(separator)
         
         # Iterujemy po składnikach odżywczych w ustalonej kolejności
-        nutrient_order = [
-            "Energy",
-            "Carbohydrate, by difference",
-            "Protein",
-            "Total lipid (fat)"
-        ]
-        
         for nutrient_name in nutrient_order:
             if nutrient_name in nutrients:
                 nutrient_data = nutrients[nutrient_name]
@@ -78,31 +93,20 @@ def print_results(results, portion):
                 # Obliczamy średnią jeśli jest wiele wartości
                 if len(values) > 1:
                     avg_amount = sum(values) / len(values)
-                    display_amount = round(avg_amount, 2)
-                    amount_info = f"{display_amount:.2f} (avg)"
+                    display_amount = f"{avg_amount:.2f} (avg)"
                 else:
-                    display_amount = round(values[0], 2)
-                    amount_info = f"{display_amount:.2f}"
+                    display_amount = f"{values[0]:.2f}"
                 
-                # Wyświetlamy wiersz
-                if first_row:
-                    print("{:<45} | {:<30} | {:>10} | {:<10}".format(
-                        food_name,
-                        nutrient_name,
-                        amount_info,
-                        unit
-                    ))
-                    first_row = False
-                else:
-                    print("{:<45} | {:<30} | {:>10} | {:<10}".format(
-                        "",
-                        nutrient_name,
-                        amount_info,
-                        unit
-                    ))
+                # Wyświetlamy wiersz ze składnikiem
+                print("{:<60} | {:<30} | {:>10} | {:<10}".format(
+                    "",
+                    nutrient_name,
+                    display_amount,
+                    unit
+                ))
         
-        # Dodajemy linię separatora po wszystkich składnikach produktu
-        print("-" * 105)
+        # Dodajemy dodatkową linię separatora po wszystkich składnikach produktu
+        print(separator)
 
 def main_menu(repo): 
     while True:
@@ -144,7 +148,6 @@ def handle_category_search(repo):
             print("\nNo results found for your search criteria.")
             return
             
-        print(f"\nSearch Results (per {portion}g):")
         print_results(results, portion)
             
     except ValueError:
@@ -186,7 +189,6 @@ def handle_food_type_search(repo):
             print("\nNo results found for your search criteria.")
             return
             
-        print(f"\nSearch Results (per {portion}g):")
         print_results(results, portion)
             
     except ValueError:
@@ -203,7 +205,6 @@ def handle_whole_database_search(repo):
         print("\nNo results found for your search criteria.")
         return
     
-    print(f"\nSearch Results (per {portion}g):")
     print_results(results, portion)
 
 def main():
